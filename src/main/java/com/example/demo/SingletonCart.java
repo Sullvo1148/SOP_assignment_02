@@ -1,15 +1,11 @@
 package com.example.demo;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.io.*;
 import java.util.ArrayList;
-import java.util.List;
 
-@Service
 public class SingletonCart {
     private static SingletonCart instance;
+    private static ArrayList<String> MenuId;
     private static ArrayList<Menu> Menus;
     private static String line;
 
@@ -18,14 +14,34 @@ public class SingletonCart {
         Menus = new ArrayList<Menu>();
     }
 
-    @Autowired
-    private CartRepository cartRepository;
-
     public static SingletonCart getInstance() {
         if (instance == null) {
             instance = new SingletonCart();
         }
-
+        try {
+            FileReader fileReader = new FileReader("cart.txt");
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            while((line = bufferedReader.readLine()) != null) {
+                if (Integer.parseInt(line) >= 0 && Integer.parseInt(line) < MenuFactory.getMenuList().length) {
+                    Menus.add(MenuFactory.getMenu(Integer.parseInt(line)));
+                }
+            }
+        }
+        catch (FileNotFoundException e) {
+            try {
+                PrintWriter writer = new PrintWriter("cart.txt", "UTF-8");
+                writer.close();
+            }
+            catch (FileNotFoundException ex) {
+                ex.printStackTrace();
+            }
+            catch (UnsupportedEncodingException ex) {
+                ex.printStackTrace();
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
         return instance;
     }
 
@@ -33,7 +49,18 @@ public class SingletonCart {
         if (id > MenuFactory.getMenuList().length) {
             return false;
         } else {
+//            FileWriter writer = null;
+//            try {
+//                writer = new FileWriter("cart.txt");
+//                for(String str: MenuId) {
+//                    writer.write(str + System.lineSeparator());
+//                }
+//                writer.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
             Menus.add(MenuFactory.getMenu(id));
+//            MenuId.add(Integer.toString(id));
             return true;
         }
 
@@ -60,13 +87,8 @@ public class SingletonCart {
         return total;
     }
 
-    public List<Cart> getCart() {
-        return cartRepository.findAll();
-    }
-
-    public void addCart(Cart cart) {
-        cart.setId(((int) cartRepository.count()) + 1);
-        cartRepository.save(cart);
+    public ArrayList<Menu> getCart() {
+        return Menus;
     }
 
 }
